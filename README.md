@@ -4,21 +4,31 @@ TheWikiSources.com
 
 resources
 ---------
-- wikipedia dumps - http://en.wikipedia.org/wiki/Wikipedia:Database_download
-  - latest dump of all english articles: http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
+
+- wikipedia api
+	- http://www.mediawiki.org/wiki/API:Main_page
+	- request a specific article by name: /api.php?action=query&prop=revisions&rvlimit=1&rvprop=content&format=xml&titles=test
+		- this is a fucking mess of proprietary code from wiki.  use the html directly from the site instead.
+
+- wikipedia dumps
+	- http://en.wikipedia.org/wiki/Wikipedia:Database_download
+	- latest dump of all english articles: http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2
 	- latest dump of all english article titles: http://download.wikimedia.org/enwiki/latest/enwiki-latest-all-titles-in-ns0.gz
 	- how to extract
 		- .bz2 files: `bunzip1 file_name.bz2`
 		- .gz files: `gunzip file_name.gz`
+
 - amazon affiliate link embed code:
 	- generate links: https://affiliate-program.amazon.com/gp/associates/promo/buildlinks.html
 		- may have to bounce the isbn off google books api, then use the asin number to get the amazon affiliate link
 	- `<iframe src="http://rcm.amazon.com/e/cm?lt1=_top&bc1=FFFFFF&IS2=1&bg1=FFFFFF&fc1=000000&lc1=0000FF&t=induinteinc-20&o=1&p=8&l=as1&m=amazon&f=ifr&ref=tf_til&asins=0914076728" style="width:120px;height:240px;" scrolling="no" marginwidth="0" marginheight="0" frameborder="0"></iframe>`
+
 - amazon products api: https://affiliate-program.amazon.com/gp/advertising/api/detail/main.html
 	- apply for an account: https://affiliate-program.amazon.com/gp/flex/associates/apply-login.html
 	- apply for api access keys: https://affiliate-program.amazon.com/gp/flex/advertising/api/sign-in.html
 	- node.js api client: https://github.com/dmcquay/node-apac
 	- product api docs: http://docs.aws.amazon.com/AWSECommerceService/latest/DG/ProgrammingGuide.html
+
 - google books api
 	- getting started: https://developers.google.com/books/docs/getting-started
 	- volumes: https://developers.google.com/books/docs/v1/reference/volumes
@@ -68,14 +78,21 @@ mysql data schema
 
 ### books  
 *we only need to collect isbn and then data that is unique to wikipedia.  all other data can be retrieved on the fly from google books api.  in most cases this data looks more complete and acurate.*
-- isbn ( string, primary key )
+- isbn ( int, primary key )
+- asin ( int ) - get from google books api
 - retrieved ( datatime )
-- url ( varchar 255 )
+- url ( varchar 255 ) - an online resource for this book from wikipedia
 
-### articles
-- title
+### articles  
+- title ( string, primary key )
+- brief ( text ) - pulled from the first section of the artcile, strip junk
+- last retrieved
+- last processed
 
-### references
+
+### references  
 - id ( int, primary key )
+- context ( text ) - paragraph containing citation
 - books_isbn
 - articles_title ( primary article id)
+- retrieved ( datetime )
