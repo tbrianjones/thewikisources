@@ -71,33 +71,6 @@ footnote code snippet from wiki article
 ```
 
 
-
-
 mysql data schema
 -----------------
-
-### books  
-*we only need to collect isbn and then data that is unique to wikipedia.  all other data can be retrieved on the fly from google books api.  in most cases this data looks more complete and acurate.*
-- isbn ( int, primary key )
-- asin ( int ) - get from google books api
-- retrieved ( datatime )
-- url ( varchar 255 ) - an online resource for this book from wikipedia
-
-### articles  
-- title ( string, primary key )
-- brief ( text ) - pulled from the first section of the artcile, strip junk
-- last retrieved
-- last processed
-
-### references  
-- id ( int, primary key )
-- context ( text ) - paragraph containing citation
-- books_isbn
-- articles_title ( primary article id)
-- retrieved ( datetime )
-
-### date_references
-- id ( int, primary key )
-- sentence ( text )
-- paragraph ( text )
-- retrieved ( datetime )
+- see mysql_schema.sql

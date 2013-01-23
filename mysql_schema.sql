@@ -29,3 +29,14 @@ CREATE TABLE `book_references` (
   KEY `articles_id` (`articles_id`),
   KEY `last_retrieved` (`last_retrieved`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `date_references` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `article_id` int(11) NOT NULL,
+  `sentence` text NOT NULL,
+  `paragraph` text NOT NULL,
+  `last_retrieved` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `article_id` (`article_id`),
+  KEY `last_retrieved` (`last_retrieved`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
