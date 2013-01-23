@@ -10,7 +10,9 @@ resources
 	- how to extract
 		- .bz2 files: `bunzip1 file_name.bz2`
 		- .gz files: `gunzip file_name.gz`
-- amazon affiliate link embed code:  
+- amazon affiliate link embed code:
+	- generate links: https://affiliate-program.amazon.com/gp/associates/promo/buildlinks.html
+		- may have to bounce the isbn off google books api, then use the asin number to get the amazon affiliate link
 	- `<iframe src="http://rcm.amazon.com/e/cm?lt1=_top&bc1=FFFFFF&IS2=1&bg1=FFFFFF&fc1=000000&lc1=0000FF&t=induinteinc-20&o=1&p=8&l=as1&m=amazon&f=ifr&ref=tf_til&asins=0914076728" style="width:120px;height:240px;" scrolling="no" marginwidth="0" marginheight="0" frameborder="0"></iframe>`
 - amazon products api: https://affiliate-program.amazon.com/gp/advertising/api/detail/main.html
 	- apply for an account: https://affiliate-program.amazon.com/gp/flex/associates/apply-login.html
