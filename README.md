@@ -89,10 +89,15 @@ mysql data schema
 - last retrieved
 - last processed
 
-
 ### references  
 - id ( int, primary key )
 - context ( text ) - paragraph containing citation
 - books_isbn
 - articles_title ( primary article id)
+- retrieved ( datetime )
+
+### date_references
+- id ( int, primary key )
+- sentence ( text )
+- paragraph ( text )
 - retrieved ( datetime )
