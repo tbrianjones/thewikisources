@@ -21,6 +21,8 @@
 		public $html;							// raw html of the article
 		
 		// extracted article data
+		public $image_page_url;					// wiki url for the page of the main image ( not the direct image url )
+		public $image_url;						// wiki url for the main image
 		public $brief;							// first section of a wikipedia article
 		public $references = array();			// all references from the article
 		public $referenced_books = array();
@@ -33,8 +35,7 @@
 		
 		// scraping stuff
 		private $Dom;
-		private $Xpath;
-		private $Body;
+		private $Dom_body;
 		
 		// construct
 		//
@@ -58,12 +59,14 @@
 			// extract data from html
 			$this->get_html();
 			$this->get_brief();
+			$this->get_image();
 			$this->get_references();
 			
 			
 			
 			// write data to database
 			//$this->update_article();
+			//this->update_references();
 			
 		}
 	
@@ -83,12 +86,9 @@
 			
 			// load html into dom document parser
 			$this->Dom = new DOMDocument();
-            $this->Dom->loadHTML( '<?xml encoding="UTF-8">' . $this->html );
-			$this->Body = $this->Dom->getElementById( 'bodyContent' );
-			
-			// load xpath finder
-			$this->Xpath = new DomXPath( $this->Dom );
-			
+            @$this->Dom->loadHTML( '<?xml encoding="UTF-8">' . $this->html );
+			$this->Dom_body = $this->Dom->getElementById( 'bodyContent' );
+						
 		}
 
 		
@@ -99,7 +99,7 @@
 		
 			$i = 0;
 			$this->brief = '';
-			$ps = $this->Body->getElementsByTagName( 'p' );
+			$ps = $this->Dom_body->getElementsByTagName( 'p' );
 			foreach( $ps as $p ) {
 				if( $i < $this->brief_length )
 					$this->brief .= "\n" . $p->nodeValue;
@@ -120,23 +120,54 @@
 		private function get_references()
 		{
 			
-			$i = strpos( $this->html, '<ol class="references">' ) + 23;
-			$f = strpos( $this->html, '</ol>', $i );
-			$references = trim( substr( $this->html, $i, $f - $i ) );
-			$this->references = explode( "\n", $references );
-			var_dump( $references );
+			$s = strpos( $this->html, '<ol class="references">' . "\n" . '<li id="cite_note-1">' ) + 23;
+			$f = strpos( $this->html, '</ol>', $s );
+			$references = trim( substr( $this->html, $s, $f - $s ) );
+			$references = explode( "\n", $references );
 			
-			/* extract the context from the article for each reference
+			// extract context
+			$i = 0;
+			foreach( $references as $reference )
+			{	
+				
+				// get reference id
+				$s = strpos( $reference, '<a href="#cite_ref-' );
+				if( $s !== FALSE )
+					$s += 19;
+				else
+					continue;
+				$f = strpos( $reference, '">', $s );
+				if( $f === FALSE )
+					continue;
+				$ref_id = substr( $reference, $s, $f - $s );
+				
+				// get reference context using ref id
+				$pos = strpos( $this->html, '<sup id="cite_ref-' . $ref_id . '"' );
+				if( $pos === FALSE )
+					continue;
+				$s = $this->rstrpos( $this->html, '<p>', $pos );
+				if( $s !== FALSE )
+					$s -= 3;
+				else
+					continue;
+				$f = strpos( $this->html, '</p>', $pos );
+				if( $f !== FALSE )
+					$f += 4;
+				else
+					continue;
+				$context = trim( substr( $this->html, $s, $f - $s ) );
+				
+				// store extracted data
+				$this->references[$i]['html'] = $reference;
+				$this->references[$i]['context'] = $context;
+				
+				// increment counter
+				$i++;
+				
+			}				
+						
+			/**********************************
 			
-			HTML:
-			<p><b>Kapton</b> is a <a href="/wiki/Polyimide" title="Polyimide">polyimide</a> film developed by <a href="/wiki/DuPont" title="DuPont">DuPont</a> which can remain stable in a wide range of temperatures, from ?273 to +400 °C (?459 ? 752 °F / 0 ? 673 K).<sup id="cite_ref-1" class="reference"><a href="#cite_note-1"><span>[</span>1<span>]</span></a></sup> Kapton is used in, among other things, flexible printed circuits (<a href="/wiki/Flexible_electronics" title="Flexible electronics">flexible electronics</a>) and <a href="/wiki/Thermal_micrometeoroid_garment" title="Thermal micrometeoroid garment" class="mw-redirect">thermal micrometeoroid garments</a>, the outside layer of <a href="/wiki/Space_suit" title="Space suit">space suits</a>.</p>
-			
-			- see the <sup id="cite_ref-1 code in the html above to spot references
-			
-			*/
-			
-			
-			/*
 			$Nodes = $this->Xpath->query( "//*[contains(@class, 'reflist')]" );
 			foreach( $Nodes->item(0)->childNodes->item(1)->childNodes as $li ) {
 				if( $li->nodeName == 'li' ) {
@@ -144,7 +175,8 @@
 						$this->references[] = trim( $stuff->nodeValue );
 				}
 			}
-			*/
+			
+			**********************************/
 						
 		}
 		
@@ -155,6 +187,36 @@
 			
 		}
 		
+		
+		private function get_image() {
+
+			// get image page url
+			$s = strpos( $this->html, 'a href="/wiki/File' );
+			if( $s !== FALSE )
+				$s += 8;
+			else
+				return FALSE;
+			$f = strpos( $this->html, '" ', $s );
+			if( $f === FALSE )
+				return FALSE;
+			$this->image_page_url = substr( $this->html, $s, $f - $s );
+			
+			// get image url			
+			$s = strpos( $this->html, 'src="', $f );
+			if( $s !== FALSE )
+				$s += 5;
+			else
+				return FALSE;
+			$f = strpos( $this->html, '" ', $s );
+			if( $f === FALSE )
+				return FALSE;
+			$this->image_url = substr( $this->html, $s, $f - $s );
+
+			echo ": " . $this->image_page_url;
+			echo "\n: " . $this->image_url;
+			die;
+			
+		}
 		
 		private function get_brian_jones() {
 			if( stripos( $this->html, 'brian jones' ) )
@@ -168,6 +230,7 @@
 				stripos( $this->html, 'love' )
 				or stripos( $this->html, 'loves' )
 				or stripos( $this->html, 'loved' )
+				or stripos( $this->html, 'loving' )
 			)
 				$this->love = TRUE;
 			else
@@ -179,6 +242,7 @@
 				stripos( $this->html, 'hate' )
 				or stripos( $this->html, 'hates' )
 				or stripos( $this->html, 'hated' )
+				or stripos( $this->html, 'hating' )
 			)
 				$this->hate = TRUE;
 			else
@@ -200,14 +264,21 @@
 		private function update_articles()
 		{
 			
+			// prep data for insertion
+			$brief			= $this->prep_string( $this->brief );
+			$image_page_url	= $this->prep_string( $this-image_page_url );
+			$image_url		= $this->prep_string( $this-image_url );
+			
+			// update data
 			$sql = "UPDATE articles
 					SET
-						brief = '" . $this->Mysqli->real_escape_string( $this->brief ) . "',
-						last_retrieved = '" . date( 'c' ) . "',
-						brian_jones = $this->brian_jones,
-						love = $this->love,
-						hate = $this->hate
-					WHERE title = '" . $this->Mysqli->real_escape_string( $this->title ) . "'";
+						brief				= '$brief',
+						image_page_url		= '$image_page_url',
+						image_url			= '$image_url',
+						brian_jones			= $this->brian_jones,
+						love				= $this->love,
+						hate				= $this->hate
+					WHERE title	= '" . $this->prep_string( $this->title ) . "'";
 			$response = $this->Mysqli->query( $sql );
 						
 		}
@@ -216,19 +287,46 @@
 		private function update_references()
 		{
 		
-			foreach( $this->references as $reference ) {
-				$html = $this->Mysqli->real_escape_string( $reference['html'];
-				$context = $this->Mysqli->real_escape_string( $reference['context'];
+			foreach( $this->references as $reference )
+			{
+			
+				// prep data for insertion
+				$html		= $this->prep_string( $reference['html'] );
+				$context	= $this->prep_string( $reference['context'] );
+				
+				// insert data
 				$sql = "INSERT INTO references( article_id, html, context )
 						VALUES( $this->id, '$html', '$context' )";
 				$response = $this->Mysqli->query( $sql );
+				
 			}
 		
 		}
 		
 		
+	// --- UTILITIES --------------------------------------------------------------
+	
+		
+		// return next previous occurace of a string
+		//
+		private function rstrpos( $haystack, $needle, $offset ) {
+			$size = strlen( $haystack );
+			$pos = strpos( strrev( $haystack ), strrev( $needle ), $size - $offset );
+			if( $pos === FALSE )
+				return FALSE;
+			return $size - $pos;
+		}
+		
+		// clean a string and prep it for database insertion
+		private function prep_string( $string ){
+			$string = trim( $string );
+			$string = $this->Mysqli->real_escape_string( $string );
+			return $string;
+		}
+				
+		
 	} // end class
 
-	$Model = new Wiki_article_model( 'Kapton' );
+	$Model = new Wiki_article_model( 'San_diego' );
 
 ?>
