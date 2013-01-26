@@ -8,6 +8,8 @@
 		// settings
 		private $sleep_seconds = 1;		// time to sleep between http requests so we don't crush wikipedia
 		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
+		private $google_api_key = 'AIzaSyCakZGELpzCiexHXTf-zvffJRTqOAN2J7M';
+		
 		
 	// --- DO NOT EDIT SETTINGS BELOW THIS LINE -----------------------------------
 		
@@ -22,6 +24,7 @@
 		public $image_url;						// wiki url for the main image
 		public $brief;							// first section of a wikipedia article
 		public $references = array();			// all references from the article
+		public $events = array();				// all sentences with years in them ( some junk remains, lots is filtered )
 		
 		// for fun extracted article data
 		public $love;							// is love discussed in the article
@@ -65,17 +68,19 @@
 				$this->get_html();
 				$this->get_brief();
 				$this->get_image();
+				$this->get_dates();
 				$this->get_references();
 				$this->get_love();
 				$this->get_hate();
 				
 				// write data to database
 				$this->update_article();
-				$this->insert_references();
+				//$this->insert_references();
+				$this->insert_events();
 			
 			} catch( Exception $e ) {
 
-				die( $e->getMessage() );
+				echo "\n\n" . $e->getMessage() . "\n\n";
 				
 			}
 			
@@ -86,9 +91,12 @@
 			echo "\n\n";
 		}
 	
+	
 	// --- GETTERS ----------------------------------------------------------------
 		
 		
+		// get the article id from the database
+		//
 		private function get_id() {
 			$sql = "SELECT id
 					FROM articles
@@ -99,6 +107,7 @@
 			else
 				throw new Exception( "Mysql Query Error: failed to retrieve article id.\n" . $this->Mysqli->error );
 		}
+
 
 		// retrieve the webpage from wikipedia.org
 		//
@@ -119,8 +128,14 @@
 			// load html into dom document parser
 			$this->Dom = new DOMDocument();
             @$this->Dom->loadHTML( '<?xml encoding="UTF-8">' . $this->html );
-			$this->Dom_body = $this->Dom->getElementById( 'bodyContent' );
-						
+			$Dom_body = $this->Dom->getElementById( 'bodyContent' );
+			if( is_null( $Dom_body ) )
+				throw new Exception( 'Dom->getElementById() error: could not fild bodyContent ID in html.' );
+			$this->Dom_body = $Dom_body;
+			
+			// reduce html to body html				
+			$this->html = $this->Dom->saveXML( $this->Dom_body );
+
 		}
 
 		
@@ -213,12 +228,14 @@
 				if( $s !== FALSE )
 					$s += 32;
 				else
-					continue;
+					return FALSE;
 				$f = strpos( $reference['html'], '"', $s );
 				if( $f === FALSE )
-					continue;
+					return FALSE;
 				$isbn_13 = substr( $reference['html'], $s, $f - $s );
 				$isbn_13 = str_replace( '-', '', $isbn_13 );
+				if( ! is_numeric( $isbn_13 ) )
+					return FALSE; // isbns have to be numeric
 				
 				// check if book exists already
 				$sql = "SELECT isbn_13, google_book_id, title, subtitle
@@ -239,21 +256,18 @@
 				
 					// request book data from google books api
 					$Curl = curl_init();
-					$url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' . $isbn_13 . '&fields=items(id,volumeInfo(title,subtitle,categories))';
+					$url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' . $isbn_13 . '&fields=items(id,volumeInfo(title,subtitle,categories))&key=' . $this->google_api_key;
 					curl_setopt( $Curl, CURLOPT_URL, $url );
 					curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
 					curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
 					$data = curl_exec( $Curl );
-					var_dump( curl_getinfo( $Curl ) );
-					curl_close( $Curl );
-					
-					
-					die;
-					
+										
 					// NOTES
 					//	- check curl response
 					//	- kill the process when google blocks us
 					//
+					// var_dump( curl_getinfo( $Curl ) );
+					curl_close( $Curl );
 					
 					// extract data we want from the google books api reponse
 					$Data = json_decode( $data );
@@ -331,6 +345,71 @@
 				return FALSE;
 			$this->image_url = substr( $this->html, $s, $f - $s );
 			
+		}
+		
+		
+		private function get_dates()
+		{
+			
+			// remove text after the notes or references sections
+			$positions[] = strpos( $this->html, 'id="Notes"' );
+			$positions[] = strpos( $this->html, 'id="See_also"' );
+			$positions[] = strpos( $this->html, 'id="References"' );
+			$positions[] = strpos( $this->html, 'id="Bibliography"' );
+			$positions[] = strpos( $this->html, 'id="External_links"' );
+			foreach( $positions as $key => $position ) {
+				if( ! $position )
+					unset( $positions[$key] );
+			}
+			$end_pos = min( $positions );
+			$html = substr( $this->html, 0, $end_pos );
+						
+			// clean up html for text processing
+			$html = strip_tags( $html );
+			$html = html_entity_decode( $html );
+			$html = htmlspecialchars_decode( $html );
+						
+			// remove all the footnote markers
+			$regex = '/\[[0-9]{1,3}\]/';
+			$html = preg_replace( $regex, '', $html );
+		
+			// find all sentences with years in them ( eg. ... 1976 ... )
+			$regex = '/[^.]*\b(1[0-9]{3}|200[0-9]|201[0-3])\b[^.]*\./';
+			preg_match_all( $regex, $html, $strings );
+						
+			// sort strings by date
+			$i = 0;
+			foreach( $strings[0] as $string )
+			{
+			
+				$string = trim( $string );
+				$strlen = strlen( $string );
+				
+				if(
+					$strlen < 250
+					&& $strlen > 40
+					&& strpos( $string, "\n" ) === FALSE
+				) {
+					
+					// extract year
+					$regex = '/\s(1|2)[0-9]{3}(\s|.)/';
+					preg_match( $regex, $string, $matches );
+					$year = trim( substr( $matches[0], 0, -1 ) );
+					
+					// save event to array
+					if( $year != '' && $string != '' && $year != 1000 ) {
+						$events[$i]['year']		= $year;
+						$events[$i]['context']	= $string;
+						$i++;
+					}
+				
+				}
+			
+			}
+			
+			// store events
+			$this->events = $events;
+
 		}
 		
 		
@@ -430,7 +509,7 @@
 					WHERE id = $this->id";
 			$Response = $this->Mysqli->query( $sql );
 			if( ! $Response )
-				throw new Exception( "Mysql Query Error: failed to save artcile to 'article' table.\n" . $this->Mysqli->error );
+				throw new Exception( "Mysql Query Error: failed to save article to 'article' table.\n" . $this->Mysqli->error );
 				
 			return TRUE;
 
@@ -511,6 +590,29 @@
 		}
 		
 		
+		private function insert_events()
+		{
+		
+			foreach( $this->events as $event )
+			{
+			
+				// prep data for insertion
+				$context = $this->prep_string( $event['context'] );
+				
+				// insert data
+				$sql = "INSERT INTO events( article_id, year, context, last_modified )
+						VALUES( $this->id, " . $event['year'] . ", '$context', '" . date( 'c' ) . "' )";
+				$Response = $this->Mysqli->query( $sql );
+				if( ! $Response )
+					throw new Exception( "Mysql Query Error: failed to save events to 'references' table.\n" . $this->Mysqli->error );
+				
+			}
+			
+			return TRUE;
+		
+		}
+		
+		
 	// --- UTILITIES --------------------------------------------------------------
 	
 		
@@ -534,6 +636,7 @@
 		
 	} // end class
 
-	$Model = new Wiki_article_model( 'Brian_jones' );
+
+	$Model = new Wiki_article_model( 'San_diego' );
 	
 ?>
