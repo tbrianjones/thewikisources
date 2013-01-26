@@ -6,9 +6,9 @@
 		
 		
 		// settings
-		private $sleep_seconds = 1;		// time to sleep between http requests so we don't crush wikipedia
+		private $sleep_seconds = 2;		// time to sleep between http requests so we don't crush wikipedia
 		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
-		private $google_api_key = 'AIzaSyCakZGELpzCiexHXTf-zvffJRTqOAN2J7M';
+		private $google_api_key = '<google-api-key>';
 		
 		
 	// --- DO NOT EDIT SETTINGS BELOW THIS LINE -----------------------------------
@@ -41,10 +41,8 @@
 		// construct
 		//
 		public function __construct(
-			$title	// the article title to fetch
+			$title = NULL	// the article title to fetch
 		) {
-			
-			echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $title ===================================\n";
 			
 			// set default timezone
 			date_default_timezone_set('America/Los_Angeles');
@@ -54,12 +52,39 @@
 			
 			// set mysql connection to use utf-8
 			$this->Mysqli->set_charset( 'utf8' );
-			// create data with passed values
-			$this->title = $title;
-			$this->url = 'http://en.wikipedia.org/wiki/' . $title;
-			$this->get_id();
-			
+
 			try {
+			
+				// get title if none was set
+				if( is_null( $title ) ) {
+					$id = rand( 1, 9577346 );
+					$sql = "SELECT id, title
+							FROM articles
+							WHERE id = $id";
+					$Response = $this->Mysqli->query( $sql );
+					if( $Response and $Response->num_rows > 0 ) {
+						$article = $Response->fetch_object();
+						$this->id = $article->id;
+						$this->title = $article->title;
+					} else {
+						throw new Exception( "Mysql Query Error: failed to select an article to process.\n" . $this->Mysqli->error );
+					}
+					
+				} else {
+					
+					// create data with passed values
+					$this->title = $title;
+					$this->get_id();
+					
+				}
+				
+				// create article url
+				$this->url = 'http://en.wikipedia.org/wiki/' . $this->title;
+				
+				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ===================================\n";
+				
+				// sleep so we don't crush wikipedia
+				sleep( $this->sleep_seconds );
 				
 				// empty this article before we process it
 				$this->reset_article();
@@ -75,7 +100,7 @@
 				
 				// write data to database
 				$this->update_article();
-				$this->insert_references();
+				// $this->insert_references();
 				$this->insert_events();
 			
 			} catch( Exception $e ) {
@@ -114,9 +139,6 @@
 		private function get_html() {
 			
 			echo "\n -- downloading article from wikipedia";
-			
-			// sleep so we don't crush wikipedia
-			//sleep( $this->sleep_seconds );
 			
 			// download page
 			$response = file_get_contents( $this->url );
@@ -351,18 +373,22 @@
 		private function get_dates()
 		{
 			
+			$html = $this->html;
+			
 			// remove text after the notes or references sections
-			$positions[] = strpos( $this->html, 'id="Notes"' );
-			$positions[] = strpos( $this->html, 'id="See_also"' );
-			$positions[] = strpos( $this->html, 'id="References"' );
-			$positions[] = strpos( $this->html, 'id="Bibliography"' );
-			$positions[] = strpos( $this->html, 'id="External_links"' );
+			$positions[] = strpos( $html, 'id="Notes"' );
+			$positions[] = strpos( $html, 'id="See_also"' );
+			$positions[] = strpos( $html, 'id="References"' );
+			$positions[] = strpos( $html, 'id="Bibliography"' );
+			$positions[] = strpos( $html, 'id="External_links"' );
 			foreach( $positions as $key => $position ) {
 				if( ! $position )
 					unset( $positions[$key] );
 			}
-			$end_pos = min( $positions );
-			$html = substr( $this->html, 0, $end_pos );
+			if( count( $positions ) > 0 ) {
+				$end_pos = min( $positions );
+				$html = substr( $html, 0, $end_pos );
+			}
 						
 			// clean up html for text processing
 			$html = strip_tags( $html );
@@ -392,10 +418,10 @@
 				) {
 					
 					// extract year
-					$regex = '/\s(1|2)[0-9]{3}(\s|.)/';
+					$regex = '/\s(1[0-9]{3}|200[0-9]|201[0-3])(\s|.)/';
 					preg_match( $regex, $string, $matches );
 					$year = trim( substr( $matches[0], 0, -1 ) );
-					
+
 					// save event to array
 					if( $year != '' && $string != '' && $year != 1000 ) {
 						$events[$i]['year']		= $year;
@@ -408,7 +434,10 @@
 			}
 			
 			// store events
-			$this->events = $events;
+			if( count( $events ) > 0 )
+				$this->events = $events;
+			else
+				$this->events = array();
 
 		}
 		
@@ -642,7 +671,11 @@
 				
 		
 	} // end class
-
-	$Model = new Wiki_article_model( 'Horses' );
+	
+	$i = 0;
+	while( $i < 25000 ) {
+		$Model = new Wiki_article_model();
+		$i++;
+	}
 	
 ?>
