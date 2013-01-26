@@ -6,14 +6,11 @@
 		
 		
 		// settings
-		private $brief_length = 1; // number of paragraphs to grab from the begining of the article to use as brief
-		
+		private $sleep_seconds = 1;		// time to sleep between http requests so we don't crush wikipedia
+		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
 		
 	// --- DO NOT EDIT SETTINGS BELOW THIS LINE -----------------------------------
 		
-		
-		// mysql connection
-		private $mysqli;
 		
 		// class attributes
 		public $title;							// article title ( unique identifier on wikipedia )
@@ -25,17 +22,18 @@
 		public $image_url;						// wiki url for the main image
 		public $brief;							// first section of a wikipedia article
 		public $references = array();			// all references from the article
-		public $referenced_books = array();
-		public $mentioned_dates = array();
 		
 		// for fun extracted article data
 		public $love = NULL;					// is love discussed in the article
 		public $hate = NULL;					// is hate discussed in the article
-		public $brian_jones = NULL;				// is 'brian jones' mentioned in the article
+		
+		// mysql connection
+		private $mysqli;
 		
 		// scraping stuff
 		private $Dom;
 		private $Dom_body;
+		
 		
 		// construct
 		//
@@ -55,35 +53,59 @@
 			// create data with passed values
 			$this->title = $title;
 			$this->url = 'http://en.wikipedia.org/wiki/' . $title;
+			$this->get_id();
 			
-			// extract data from html
-			$this->get_html();
-			$this->get_brief();
-			$this->get_image();
-			$this->get_references();
+			try {
+
+				// extract data from html
+				$this->get_html();
+				$this->get_brief();
+				$this->get_image();
+				$this->get_references();
+				
+				// write data to database
+				//$this->update_article();
+				//$this->update_references();
+				//$this->insert_referenced_books();
 			
-			
-			
-			// write data to database
-			//$this->update_article();
-			//this->update_references();
+			} catch( Exception $e ) {
+				
+				echo $e->getMessage();
+				die;
+				
+			}
 			
 		}
 	
 	
 	// --- GETTERS ----------------------------------------------------------------
-	
+		
+		
+		privagte function get_id() {
+			$sql = "SELECT id
+					FROM articles
+					WHERE title = '" . $this->title . "'";
+			$Response = $this->Mysqli->query( $sql );
+			if( $Response )
+				$this->id = $Response->fetch_object()->id;
+			else
+				throw new Exception( "Mysql Query Error: failed to retrieve article id.\n$this->Mysqli->error" );
+		}
 
 		// retrieve the webpage from wikipedia.org
 		//
 		private function get_html() {
 			
 			// sleep so we don't crush wikipedia
-			//sleep( 1 );
+			//sleep( $this->sleep_seconds );
 			
 			// download page
-			$this->html = file_get_contents( $this->url );
-			
+			$response = file_get_contents( $this->url );
+			if( ! $response )
+				thrown new Exception( 'file_get_contents() error: failed to retrieve article from wikipedia.org.' );
+			else
+				$this->html = $response;
+				
 			// load html into dom document parser
 			$this->Dom = new DOMDocument();
             @$this->Dom->loadHTML( '<?xml encoding="UTF-8">' . $this->html );
@@ -164,26 +186,59 @@
 				// increment counter
 				$i++;
 				
-			}				
-						
-			/**********************************
-			
-			$Nodes = $this->Xpath->query( "//*[contains(@class, 'reflist')]" );
-			foreach( $Nodes->item(0)->childNodes->item(1)->childNodes as $li ) {
-				if( $li->nodeName == 'li' ) {
-					foreach( $li->childNodes as $stuff )
-						$this->references[] = trim( $stuff->nodeValue );
-				}
 			}
-			
-			**********************************/
 						
 		}
 		
-		private function get_referenced_books()
+		
+		// pass a reference in here to check if it's a book and retrieve data
+		//
+		private function get_book_from_reference( $reference )
 		{
 			
-			// loop through $this->references and extract books
+				if( strpos( $reference['html'], 'ISBN' ) ) {
+					
+					// get isbn_13
+					$s = strpos( $reference['html'], 'href="/wiki/Special:BookSources/' );
+					if( $s !== FALSE )
+						$s += 32;
+					else
+						continue;
+					$f = strpos( $reference['html'], '"', $s );
+					if( $f === FALSE )
+						continue;
+					$isbn_13 = substr( $reference['html'], $s, $f - $s );
+					$isbn_13 = str_replace( '-', '', $isbn_13 );
+					
+					// request book data from google books api
+					$Curl = curl_init();
+					$url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' . $isbn_13 . '&fields=items(id,volumeInfo(title,subtitle,categories))';
+					curl_setopt( $Curl, CURLOPT_URL, $url );
+					curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
+					curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
+					$data = curl_exec( $Curl );
+					curl_close( $Curl );
+					
+					// extract data we want from the google books api reponse
+					$Data = json_decode( $data );
+					$Book = $Data->items[0];
+					
+					// store data
+					$book['isbn_13']			= $isbn_13;
+					$book['google_book_id']	= $Book->id;
+					$book['title']			= $Book->volumeInfo->title;
+					$book['subtitle']			= $Book->volumeInfo->subtitle;
+					foreach( $Book->volumeInfo->categories as $category )
+						$book['categories'][] = $category;
+						
+					// return book data
+					return $book;
+
+				} else {
+					return FALSE;
+				}
+	
+			}
 			
 		}
 		
@@ -211,19 +266,9 @@
 			if( $f === FALSE )
 				return FALSE;
 			$this->image_url = substr( $this->html, $s, $f - $s );
-
-			echo ": " . $this->image_page_url;
-			echo "\n: " . $this->image_url;
-			die;
 			
 		}
 		
-		private function get_brian_jones() {
-			if( stripos( $this->html, 'brian jones' ) )
-				$this->brian_jones = TRUE;
-			else
-				$this->brian_jones = FALSE;
-		}
 		
 		private function get_love() {
 			if(
@@ -236,6 +281,7 @@
 			else
 				$this->love = FALSE;
 		}
+		
 		
 		private function get_hate() {
 			if(
@@ -250,16 +296,54 @@
 		}
 		
 		
-	// --- WRITE TO DATABASE ------------------------------------------------------
-	//
-	//	NOTES:
-	//		- we prob have to remove all data about an article every time we process it
-	//			- select if of all references for this article
-	//				- delete those references by id
-	//				- delete all references_to_books where the reference_id matches these reference_ids
-	//				- repeat with other reference types
-	//			- delete mentioned dates where they match this article title
-	//
+	// --- DATABASE STUFF -----------------------------------------------------
+	
+	
+		// removes all info related to this article in every table
+		//
+		//	- this should be run before processing an article so that when we reprocess articles, we get fresh data
+		//
+		private function reset_article()
+		{
+			
+			// empty this article's info
+			$sql = "UPDATE articles
+					SET
+						brief			= NULL,
+						imafge_page_url	= NULL,
+						image_url		= NULL,
+						love			= NULL,
+						hate			= NULL
+					WHERE title = $this->title";
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to reset article in mysql database.\n$this->Mysqli->error" );
+			
+			// delete all book to references for references for this article ( from the books_to_refernces table )
+			//
+			//	*** this has to be run before we delete the references, or we won't be able to find these
+			//	*** we never delete books ( they should never change )
+			//
+			$sql = "DELETE FROM books_to_references
+					WHERE reference_id IN (
+						SELECT id
+						FROM references
+						WHERE article_id = " . $this->id ."
+					)";
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to delete book to references data.\n$this->Mysqli->error" );	
+			
+			// delete all references for this article
+			$sql = "DELETE FROM references
+					WHERE article_id = " . $this->id;
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to delete references.\n$this->Mysqli->error" );
+			
+			return TRUE;
+			
+		}
 	
 		private function update_articles()
 		{
@@ -279,8 +363,12 @@
 						love				= $this->love,
 						hate				= $this->hate
 					WHERE title	= '" . $this->prep_string( $this->title ) . "'";
-			$response = $this->Mysqli->query( $sql );
-						
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to save artcile to 'article' table.\n$this->Mysqli->error" );
+				
+			return TRUE;
+
 		}
 		
 		
@@ -297,10 +385,68 @@
 				// insert data
 				$sql = "INSERT INTO references( article_id, html, context )
 						VALUES( $this->id, '$html', '$context' )";
-				$response = $this->Mysqli->query( $sql );
+				$Response = $this->Mysqli->query( $sql );
+				if( ! $Response )
+					throw new Exception( "Mysql Query Error: failed to save references to 'references' table.\n$this->Mysqli->error" );
+				
+				// check the reference for a book by isbn and save book if it is one
+				$book = $this->get_book_from_reference( $reference );
+				if( $book !== FALSE ) {
+					$reference_id = $this->Mysqli->insert_id;
+					$this->insert_referenced_book( $reference_id, $book );
+				}
 				
 			}
+			
+			return TRUE;
 		
+		}
+		
+		
+		// insert a referenced book and it's data into multiple tables
+		//
+		private function insert_referenced_book(
+			$reference_id,		// reference id from references table
+			$book				// array with book data
+		) {
+		
+			// prep data for insertion
+			$google_book_id	= $this->prep_string( $book['google_book_id'] );
+			$title			= $this->prep_string( $book['title'] );
+			$subtitle		= $this->prep_string( $book['subtitle'] );
+			
+			// insert data
+			$sql = "INSERT INTO books( isbn_13, google_book_id, title, subtitle )
+					VALUES( " . $book['isbn_13'] . ", '$google_book_id', '$title', '$subtitle' )
+					ON DUPLICATE KEY UPDATE
+						google_book_id	= '$google_book_id',
+						title			= '$title',
+						subtitle		= '$subtitle'";
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to save book to 'books' table.\n$this->Mysqli->error" );
+						
+			// insert book categories
+			foreach( $book['categories'] as $category ) {
+				$category = $this->prep_string( $category );
+				$sql = "INSERT IGNORE INTO books_to_categories( book_isbn, category )
+						VALUES( " . $book['isbn_13'] . ", '$category' )";
+				$Response = $this->Mysqli->query( $sql );
+				if( ! $Response )
+					throw new Exception( "Mysql Query Error: failed to save book category to 'books_to_categories' table.\n$this->Mysqli->error" );
+
+			}
+			
+			// insert book and reference data into references_to_books table
+			$sql = "INSERT IGNORE INTO books_to_references( book_isbn, reference_id )
+					VALUES( " . $book['isbn_13'] . ", $reference_id";
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to save book to 'books_to_references' table.\n$this->Mysqli->error" );
+			
+			// success
+			return TRUE;
+			
 		}
 		
 		
@@ -327,6 +473,6 @@
 		
 	} // end class
 
-	$Model = new Wiki_article_model( 'San_diego' );
-
+	$Model = new Wiki_article_model( 'Kapton' );
+	
 ?>
