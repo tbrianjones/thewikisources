@@ -9,6 +9,7 @@
 		private $sleep_seconds = 2;		// time to sleep between http requests so we don't crush wikipedia
 		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
 		private $google_api_key = '<google-api-key>';
+		private $user_agent = 'timeline_research_tool/V0.1 ( tbrianjones@gmail.com )';
 		
 		
 	// --- DO NOT EDIT SETTINGS BELOW THIS LINE -----------------------------------
@@ -93,7 +94,7 @@
 				$this->get_html();
 				$this->get_brief();
 				$this->get_image();
-				$this->get_dates();
+				$this->get_events();
 				$this->get_references();
 				$this->get_love();
 				$this->get_hate();
@@ -141,11 +142,28 @@
 			echo "\n -- downloading article from wikipedia";
 			
 			// download page
-			$response = file_get_contents( $this->url );
-			if( ! $response )
+			$Curl = curl_init();
+			curl_setopt( $Curl, CURLOPT_URL, $this->url );
+			curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
+			curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
+			curl_setopt( $Curl, CURLOPT_USERAGENT, $this->user_agent ); 
+			$data = curl_exec( $Curl );
+							
+			// echo header info
+			$headers = curl_getinfo( $Curl );
+			echo "\n  - url: " . $headers['url'];
+			echo "\n  - http response code: " . $headers['http_code'];
+			echo "\n  - content type: " . $headers['content_type'];
+			echo "\n  - number of redirects: " . $headers['redirect_count'];
+			
+			// check response
+			if( $data === FALSE )
 				throw new Exception( 'file_get_contents() error: failed to retrieve article from wikipedia.org.' );
 			else
-				$this->html = $response;
+				$this->html = $data;
+
+			// close curl connection
+			curl_close( $Curl );
 				
 			// load html into dom document parser
 			$this->Dom = new DOMDocument();
@@ -370,7 +388,7 @@
 		}
 		
 		
-		private function get_dates()
+		private function get_events()
 		{
 			
 			$html = $this->html;
@@ -434,7 +452,7 @@
 			}
 			
 			// store events
-			if( count( $events ) > 0 )
+			if( isset( $events) && count( $events ) > 0 )
 				$this->events = $events;
 			else
 				$this->events = array();
