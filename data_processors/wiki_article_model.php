@@ -244,8 +244,12 @@
 					curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
 					curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
 					$data = curl_exec( $Curl );
+					var_dump( curl_getinfo( $Curl ) );
 					curl_close( $Curl );
-										
+					
+					
+					die;
+					
 					// NOTES
 					//	- check curl response
 					//	- kill the process when google blocks us
