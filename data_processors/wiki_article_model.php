@@ -75,7 +75,7 @@
 				
 				// write data to database
 				$this->update_article();
-				//$this->insert_references();
+				$this->insert_references();
 				$this->insert_events();
 			
 			} catch( Exception $e ) {
@@ -486,6 +486,13 @@
 			if( ! $Response )
 				throw new Exception( "Mysql Query Error: failed to delete references.\n" . $this->Mysqli->error );
 			
+			// delete all events from this article
+			$sql = "DELETE FROM events
+					WHERE article_id = " . $this->id;
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to delete events.\n" . $this->Mysqli->error );
+			
 			return TRUE;
 			
 		}
@@ -636,7 +643,6 @@
 		
 	} // end class
 
-
-	$Model = new Wiki_article_model( 'San_diego' );
+	$Model = new Wiki_article_model( 'Horses' );
 	
 ?>
