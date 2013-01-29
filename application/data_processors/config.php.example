@@ -1,9 +1,20 @@
 <?php
 
-	// settings
-	private $sleep_seconds = 2;		// time to sleep between http requests so we don't crush wikipedia
-	private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
-	private $google_api_key = '<google_api_key>';
-	private $user_agent = 'timeline_research_tool/V0.1 ( tbrianjones@gmail.com )';
+	// crawling & scraping
+	define( 'CRRALWER_SLEEP_SECONDS', 2 ); // time to sleep between http requests to wikipedia while crawling
+	define( 'CRAWLER_USER_AGENT', 'timeline_research_tool/V0.1 ( <your_email> )' );
+	define( 'CRAWLER_BRIEF_LENGTH', 1 ); // number of paragraphs to grab from the begining of the article to use as brief
+	
+	// google books api
+	define( 'GOOGLE_API_KEY', '<your_google_api_key>' );
+	
+	// mysql database
+	define( 'DB_HOST', '<your_mysql_host_address>' );
+	define( 'DB_USER', '<your_mysql_username>' );
+	define( 'DB_PASS', '<your_mysql_password>' );
+	define( 'DB_NAME', '<your_mysql_database_name>' );
+
+	// elasticsearch configuration
+	define( 'ES_HOST', '<your_elasticsearch_host_address>' );
 
 ?>

@@ -1,14 +1,16 @@
 <?php
 	
-		
+	
+	// include configuration ( you must update config.example with passwords when checking this repo out the first time )
+	require( 'config.php');
+	
+	
 	class Wiki_article_model
 	{
 		
-		
-		// include configuration ( you must update config.example with passwords when checking this repo out the first time )
-		require_once( 'config.php');		
-		
+	
 		// class attributes
+		public $id;								// article id in wiki database
 		public $title;							// article title ( unique identifier on wikipedia )
 		public $url;							// article's url on wikipedia
 		public $html;							// raw html of the article
@@ -42,7 +44,7 @@
 			date_default_timezone_set('America/Los_Angeles');
 			
 			// connect to mysql
-			$this->Mysqli = new mysqli( 'wikipedia.cw0tm7tgwtd4.us-east-1.rds.amazonaws.com', 'jones', 'zMfZdhce', 'wikipedia' );
+			$this->Mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME );
 			
 			// set mysql connection to use utf-8
 			$this->Mysqli->set_charset( 'utf8' );
@@ -78,11 +80,11 @@
 				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ===================================\n";
 				
 				// sleep so we don't crush wikipedia
-				sleep( $this->sleep_seconds );
+				sleep( CRAWLER_SLEEP_SECONDS );
 				
 				// empty this article before we process it
 				$this->reset_article();
-				
+				die;
 				// extract data from html
 				$this->get_html();
 				$this->get_brief();
@@ -121,7 +123,7 @@
 					FROM articles
 					WHERE title = '" . $this->title . "'";
 			$Response = $this->Mysqli->query( $sql );
-			if( $Response )
+			if( $Response && $Response->num_rows > 0 )
 				$this->id = $Response->fetch_object()->id;
 			else
 				throw new Exception( "Mysql Query Error: failed to retrieve article id.\n" . $this->Mysqli->error );
@@ -139,7 +141,7 @@
 			curl_setopt( $Curl, CURLOPT_URL, $this->url );
 			curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
 			curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
-			curl_setopt( $Curl, CURLOPT_USERAGENT, $this->user_agent ); 
+			curl_setopt( $Curl, CURLOPT_USERAGENT, CRAWLER_USER_AGENT ); 
 			$data = curl_exec( $Curl );
 							
 			// echo header info
@@ -181,7 +183,7 @@
 			$this->brief = '';
 			$ps = $this->Dom_body->getElementsByTagName( 'p' );
 			foreach( $ps as $p ) {
-				if( $i < $this->brief_length )
+				if( $i < CRAWLER_BRIEF_LENGTH )
 					$this->brief .= "\n" . $p->nodeValue;
 				else
 					break;
@@ -289,7 +291,7 @@
 				
 					// request book data from google books api
 					$Curl = curl_init();
-					$url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' . $isbn_13 . '&fields=items(id,volumeInfo(title,subtitle,categories))&key=' . $this->google_api_key;
+					$url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' . $isbn_13 . '&fields=items(id,volumeInfo(title,subtitle,categories))&key=' . GOOGLE_API_KEY;
 					curl_setopt( $Curl, CURLOPT_URL, $url );
 					curl_setopt( $Curl, CURLOPT_RETURNTRANSFER, 1 );
 					curl_setopt( $Curl, CURLOPT_CONNECTTIMEOUT, 5 );
@@ -479,7 +481,7 @@
 		}
 		
 		
-	// --- DATABASE STUFF -----------------------------------------------------
+	// --- MYSQL STUFF -----------------------------------------------------
 	
 	
 		// removes all info related to this article in every table
@@ -525,6 +527,25 @@
 			$Response = $this->Mysqli->query( $sql );
 			if( ! $Response )
 				throw new Exception( "Mysql Query Error: failed to delete references.\n" . $this->Mysqli->error );
+			
+			// select events to delete from elasticsearch
+			//	* this must be done before the events are deleted from mysql or we won't know what to delete
+			$sql = "SELECT id
+					FROM events
+					WHERE article_id = " . $this->id;
+			$Response = $this->Mysqli->query( $sql );
+			if( ! $Response )
+				throw new Exception( "Mysql Query Error: failed to select events to delete from the Elasticsearch Index.\n" . $this->Mysqli->error );
+			if( $Response->num_rows > 0 ) {
+				while( $Row = $Response->fetch_object() ) {
+					
+					// delete each event from the elasticsearch index
+					$cmd = "curl -silent -XDELETE '" . ES_HOST . "events/event/" . $Row->id . "'";
+					$Es_response = json_decode( shell_exec( $cmd ) );
+					if( isset( $Es_response->error ) )
+						throw new Exception( "Elasticsearch Error: failed to delete event from Elasticsearch index.\nresponse: " . $Es_response->status . "\nerror message: " . $Es_response->error );
+				}
+			}
 			
 			// delete all events from this article
 			$sql = "DELETE FROM events
@@ -653,10 +674,49 @@
 				if( ! $Response )
 					throw new Exception( "Mysql Query Error: failed to save events to 'references' table.\n" . $this->Mysqli->error );
 				
+				// add to elasticsearch index
+				$event_id = $this->Mysqli->insert_id;
+				$this->add_event_to_elasticsearch( $event_id, $event );
+				
 			}
 			
 			return TRUE;
 		
+		}
+		
+		
+	// --- ELASTICSEARCH STUFF -----------------------------------------------------
+		
+		
+		// insert an event into elasticsearch
+		//
+		// *** this must be run during the mysql insertion so we can grab an id
+		//
+		private function add_event_to_elasticsearch( $event_id, $event )
+		{
+			
+			// create article array		
+			$article = array(
+				'id'		=> $this->id,
+				'title'		=> $this->escape_json_string( $this->title ),
+				'brief'		=> $this->escape_json_string( $this->brief ),
+			);
+			
+			// modify event array
+			$event['id']		= $event_id;
+			$event['context']	= $this->escape_json_string( $event['context'] );
+			$event['article']	= $article;
+						
+			// push to elasticsearch
+			$event_json = json_encode( $event );
+			$cmd = "curl -silent -XPUT '" . ES_HOST . "events/event/" . $event['id'] . "?pretty=true' -d '" . $event_json . "'";
+			echo "\n\n" . $cmd . "\n\n";
+			$Response = json_decode( shell_exec( $cmd ) );
+			if( isset( $Response->error ) )
+				throw new Exception( "Elasticsearch Error: failed to push event to Elasticsearch index.\nresponse: " . $Response->status . "\nerror message: " . $Response->error );
+				
+			return TRUE;
+			
 		}
 		
 		
@@ -679,14 +739,21 @@
 			$string = $this->Mysqli->real_escape_string( $string );
 			return $string;
 		}
+		
+		// espace a json_encoded string before sending it to elasticsearch
+		//
+		//	- adapted from rjha94's answer here: http://stackoverflow.com/questions/1048487/phps-json-encode-does-not-escape-all-json-control-characters
+		//
+		function escape_json_string( $string ) {
+			$search = array( "'" ) ;
+			$replace = array( "&#039" );
+			$string = str_replace( $search, $replace, $string );
+			return $string;
+		}
 				
 		
 	} // end class
 	
-	$i = 0;
-	while( $i < 25000 ) {
-		$Model = new Wiki_article_model();
-		$i++;
-	}
+	$Model = new Wiki_article_model( 'Baltimore' );
 	
 ?>

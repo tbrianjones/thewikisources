@@ -36,3 +36,7 @@ elasticsearch setup
 - boot up an instance running the 'wikicortex elasticsearch node'
 - run `sh SETUP/create_elasticsearch_mapping.sh` to configure our index
 - add data ... not working yet
+	- design
+	- delete all events when an article is reprocessed ( select their ids from mysql and do a group delete from es )
+	- add all events as the article is reprocessed
+	- done??
