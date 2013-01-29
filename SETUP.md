@@ -29,3 +29,10 @@ mysql setup
 
 ### from database backup
 - launch an rds instance using the `only-contains-all-article-titles` db snapshot in tbj's aws account
+
+
+elasticsearch setup
+-------------------
+- boot up an instance running the 'wikicortex elasticsearch node'
+- run `sh SETUP/create_elasticsearch_mapping.sh` to configure our index
+- add data ... not working yet

@@ -5,15 +5,8 @@
 	{
 		
 		
-		// settings
-		private $sleep_seconds = 2;		// time to sleep between http requests so we don't crush wikipedia
-		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
-		private $google_api_key = '<google_api_key>';
-		private $user_agent = 'timeline_research_tool/V0.1 ( tbrianjones@gmail.com )';
-		
-		
-	// --- DO NOT EDIT SETTINGS BELOW THIS LINE -----------------------------------
-		
+		// include configuration ( you must update config.example with passwords when checking this repo out the first time )
+		require_once( 'config.php');		
 		
 		// class attributes
 		public $title;							// article title ( unique identifier on wikipedia )
