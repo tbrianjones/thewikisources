@@ -1,0 +1,7 @@
+div#content {}
+
+	div#content h1 {}
+
+		div#content h1 span {
+		font-size: 65%; }
+	

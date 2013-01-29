@@ -19,11 +19,24 @@
 			$this->db->from( 'books_to_references' );
 			$query = $this->db->get();
 			if( $query->num_rows > 0 ) {
+				
+				$i = 0;
 				foreach( $query->result() as $row ) {
-					$this->load->model( 'references/Reference_model', 'Reference' );
+					
+					// get reference
+					$this->load->model( 'Reference_model', 'Reference' );
 					$this->Reference->load( $row->reference_id );
-					$this->references[] = get_object_vars( $this->Reference );
+					$this->references[$i] = get_object_vars( $this->Reference );
+					
+					// get article for this reference
+					$this->load->model( 'Article_model', 'Article' );
+					$this->references[$i]['article'] = 
+					unset( $this->references[$i]['article_id'] );
+					
+					$i++;
+					
 				}
+				
 			} else {
 				return FALSE;
 			}
