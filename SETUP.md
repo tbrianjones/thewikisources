@@ -14,6 +14,7 @@ linux setup
 	- php-pecl-xdebug
 		- update /etc/php.ini to `html_error = On`
 		- start ( or restart ) httpd
+	- php-xml
 	- git
 
 

@@ -8,7 +8,7 @@
 		// settings
 		private $sleep_seconds = 2;		// time to sleep between http requests so we don't crush wikipedia
 		private $brief_length = 1;		// number of paragraphs to grab from the begining of the article to use as brief
-		private $google_api_key = '<google-api-key>';
+		private $google_api_key = '<google_api_key>';
 		private $user_agent = 'timeline_research_tool/V0.1 ( tbrianjones@gmail.com )';
 		
 		
@@ -101,7 +101,7 @@
 				
 				// write data to database
 				$this->update_article();
-				// $this->insert_references();
+				$this->insert_references();
 				$this->insert_events();
 			
 			} catch( Exception $e ) {
@@ -691,7 +691,7 @@
 	} // end class
 	
 	$i = 0;
-	while( $i < 5000 ) {
+	while( $i < 25000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}
