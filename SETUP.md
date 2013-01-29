@@ -6,8 +6,15 @@ linux setup
 ------------
 -install
 	- httpd
+		- update httpd.conf to allow htaccess file to override apache conf
+		- `sudo vim /etc/httpd/conf/httpd.conf`
+		- make `AllowOveride = All` inside the `<Directory "/var/www/html"` conf section
 	- php
 	- php-mysql
+	- php-pecl-xdebug
+		- update /etc/php.ini to `html_error = On`
+		- start ( or restart ) httpd
+	- git
 
 
 

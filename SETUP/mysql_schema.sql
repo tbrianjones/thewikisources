@@ -7,7 +7,7 @@
 #
 # Host: wikipedia.cw0tm7tgwtd4.us-east-1.rds.amazonaws.com (MySQL 5.5.27)
 # Database: wikipedia
-# Generation Time: 2013-01-26 08:34:55 +0000
+# Generation Time: 2013-01-29 03:27:45 +0000
 # ************************************************************
 
 
@@ -58,11 +58,11 @@ CREATE TABLE `books` (
 # ------------------------------------------------------------
 
 CREATE TABLE `books_to_categories` (
-  `book_isbn` bigint(13) unsigned zerofill NOT NULL,
+  `book_isbn_13` bigint(13) unsigned zerofill NOT NULL,
   `category` varchar(255) NOT NULL DEFAULT '',
   `last_modified` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY `book_isbn_to_category` (`book_isbn`,`category`),
-  KEY `book_isbn` (`book_isbn`),
+  UNIQUE KEY `book_isbn_to_category` (`book_isbn_13`,`category`),
+  KEY `book_isbn` (`book_isbn_13`),
   KEY `category` (`category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -72,11 +72,11 @@ CREATE TABLE `books_to_categories` (
 # ------------------------------------------------------------
 
 CREATE TABLE `books_to_references` (
-  `book_isbn` bigint(13) unsigned zerofill NOT NULL DEFAULT '0000000000000',
+  `book_isbn_13` bigint(13) unsigned zerofill NOT NULL DEFAULT '0000000000000',
   `reference_id` int(11) NOT NULL DEFAULT '0',
   `last_modified` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY `book_isbn_and_reference_id` (`book_isbn`,`reference_id`),
-  KEY `book_isbn` (`book_isbn`),
+  UNIQUE KEY `book_isbn_and_reference_id` (`book_isbn_13`,`reference_id`),
+  KEY `book_isbn` (`book_isbn_13`),
   KEY `reference_id` (`reference_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
