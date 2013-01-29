@@ -6,6 +6,17 @@ to do
 -----
 - check for a book in our database before wqe query the google book api
 	- consider requesting a higher rate limit on google books api
+- check why this article crushes the system
+	- "Places_in_Afghanistan" - http://en.wikipedia.org/wiki/Places_in_Afghanistan
+
+
+data estimates
+--------------
+- 8M wiki articles ( why are the number of article titles twice what wiki reports on wiki.org ??? )
+- 5 references per article ( 40M references )
+- 3.5 events per article ( 28M events )
+- 0.2 books per article ( 1.6M books )
+
 
 resources
 ---------
