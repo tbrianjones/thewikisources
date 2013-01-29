@@ -691,7 +691,7 @@
 	} // end class
 	
 	$i = 0;
-	while( $i < 25000 ) {
+	while( $i < 5000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}
