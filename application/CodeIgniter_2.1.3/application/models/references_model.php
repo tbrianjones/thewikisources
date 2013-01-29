@@ -30,7 +30,8 @@
 					
 					// get article for this reference
 					$this->load->model( 'Article_model', 'Article' );
-					$this->references[$i]['article'] = 
+					$this->Article->load( $this->Reference->article_id );
+					$this->references[$i]['article'] = get_object_vars( $this->Article );
 					unset( $this->references[$i]['article_id'] );
 					
 					$i++;

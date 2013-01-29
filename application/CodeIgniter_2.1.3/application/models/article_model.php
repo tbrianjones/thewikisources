@@ -10,7 +10,7 @@
 		public $title;
 		public $brief;
 		public $image_page_url;
-		public $image_url;
+		public $image_urls = array();
 		public $love;
 		public $hate;
 		public $last_modified;
@@ -26,6 +26,7 @@
 						
 			$this->db->select( '
 				id,
+				title,
 				brief,
 				image_page_url,
 				image_url,
@@ -45,11 +46,13 @@
 				$this->id				= $row->id;
 				$this->title			= $row->title;
 				$this->brief			= $row->brief;
-				$this->image_page_url	= $row->image_page_url;
-				$this->image_url		= $row->image_url;
 				$this->love				= $row->love;
 				$this->hate				= $row->hate;
 				$this->last_modified	= $row->last_modified;
+
+				// image urls
+				$this->image_urls['cached'] = 'http:' . $row->image_url; // this image should be cached by wikipedia
+				$this->image_urls['image_page_url'] = 'http://en.wikipedia.org' . $row->image_page_url;
 				
 				// set derived data
 				$this->get_profile_url();

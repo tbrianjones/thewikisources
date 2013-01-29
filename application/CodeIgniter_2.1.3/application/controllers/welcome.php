@@ -7,7 +7,7 @@
 		{
 						
 			// load book
-			$this->load->model( 'references/Books_model', 'Books' );
+			$this->load->model( 'Books_model', 'Books' );
 			$this->Books->get_popular_books_by_number_of_references();
 			$data['books'] = $this->Books;
 			$page['content'] = $this->load->view( 'home.php', $data, TRUE );
