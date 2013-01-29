@@ -38,7 +38,7 @@
 				$this->id				= $row->id;
 				$this->article_id		= $row->article_id;
 				$this->reference_html	= $row->reference_html;
-				$this->context_html		= $row->context_html;
+				$this->context_html		= str_replace( '<a href="/wiki', '<a href="http://en.wikipedia.org/wiki', $row->context_html );
 				$this->last_modified	= $row->last_modified;
 				
 			} else {
