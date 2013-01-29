@@ -13,6 +13,7 @@
 		public $title;
 		public $subtitle;
 		public $last_modified;
+		public $profile_url;
 		
 		
 		// load data for this reference
@@ -43,6 +44,9 @@
 				$this->subtitle			= $row->subtitle;
 				$this->last_modified	= $row->last_modified;
 				
+				// set derived data
+				$this->get_profile_url();
+				
 			} else {
 			
 				return FALSE;
@@ -51,6 +55,11 @@
 			
 		}
 	
+	
+		private function get_profile_url() {
+			$this->profile_url = '/reference/book/' . $this->isbn_13;
+			return $this->profile_url;
+		}
 
 	} // end class
 	

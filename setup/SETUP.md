@@ -5,9 +5,10 @@ SETUP WikiSources.com
 linux setup
 ------------
 -install
+	- httpd
 	- php
 	- php-mysql
-	- mysql-client
+
 
 
 mysql setup
