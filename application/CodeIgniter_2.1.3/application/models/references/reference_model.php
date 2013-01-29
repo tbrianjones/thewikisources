@@ -7,11 +7,11 @@
 
 		
 		// attributes
-		private $id;
-		private $article_id;
-		private $reference_html;
-		private $context_html;
-		private $last_modified;
+		public $id;
+		public $article_id;
+		public $reference_html;
+		public $context_html;
+		public $last_modified;
 
 		
 		// load data for this reference

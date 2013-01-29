@@ -9,11 +9,20 @@
 		// attributes
 		public $isbn_13;
 		public $isbn_10;
-		public $google_book_id;
 		public $title;
 		public $subtitle;
 		public $last_modified;
+		
+		// derived attributes
 		public $profile_url;
+		
+		// google resources
+		public $google_book_id;
+		public $google_book_url;
+		public $cover_image_urls = array();
+		
+		// amazon resources
+		public $amazon_affiliate_url;
 		
 		
 		// load data for this reference
@@ -46,6 +55,9 @@
 				
 				// set derived data
 				$this->get_profile_url();
+				$this->get_cover_image_urls();
+				$this->get_google_book_url();
+				$this->get_amazon_affiliate_url();
 				
 			} else {
 			
@@ -59,6 +71,20 @@
 		private function get_profile_url() {
 			$this->profile_url = '/reference/book/' . $this->isbn_13;
 			return $this->profile_url;
+		}
+		
+		private function get_cover_image_urls() {
+			$this->cover_image_urls['small'] = 'http://bks6.books.google.com/books?id=' . $this->google_book_id . '&printsec=frontcover&img=1&zoom=5';
+			$this->cover_image_urls['medium'] = 'http://bks6.books.google.com/books?id=' . $this->google_book_id . '&printsec=frontcover&img=1&zoom=1';
+			$this->cover_image_urls['large'] = 'http://bks6.books.google.com/books?id=' . $this->google_book_id . '&printsec=frontcover&img=1&zoom=2';
+		}
+		
+		private function get_google_book_url() {
+			$this->google_book_url = 'http://books.google.com/books?id=' . $this->google_book_id;
+		}
+		
+		private function get_amazon_affiliate_url() {
+			$this->amazon_affiliate_url = 'http://www.amazon.com/gp/product/' . $this->isbn_10 . '/&tag=induinteinc-20';
 		}
 
 	} // end class

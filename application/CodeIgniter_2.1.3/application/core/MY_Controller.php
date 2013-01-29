@@ -8,8 +8,18 @@
 		
 		
 		function __construct() {
+
 			parent::__construct();
-			$this->load->database();
+			
+			// do stuff in development mode
+			if( ENVIRONMENT == 'development' ) 
+			{
+
+				$this->output->enable_profiler( TRUE );
+
+			}
+
+			
 		}
 		
 	

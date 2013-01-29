@@ -22,7 +22,7 @@
 				foreach( $query->result() as $row ) {
 					$this->load->model( 'references/Reference_model', 'Reference' );
 					$this->Reference->load( $row->reference_id );
-					$this->references[] = $this->Reference;
+					$this->references[] = get_object_vars( $this->Reference );
 				}
 			} else {
 				return FALSE;
