@@ -623,7 +623,7 @@
 			// insert book categories
 			foreach( $book['categories'] as $category ) {
 				$category = $this->prep_string( $category );
-				$sql = "INSERT IGNORE INTO books_to_categories( book_isbn, category, last_modified )
+				$sql = "INSERT IGNORE INTO books_to_categories( book_isbn_13, category, last_modified )
 						VALUES( " . $book['isbn_13'] . ", '$category', '" . date( 'c' ) . "' )";
 				$Response = $this->Mysqli->query( $sql );
 				if( ! $Response )
@@ -632,7 +632,7 @@
 			}
 			
 			// insert book and reference data into references_to_books table
-			$sql = "INSERT IGNORE INTO books_to_references( book_isbn, reference_id, last_modified )
+			$sql = "INSERT IGNORE INTO books_to_references( book_isbn_13, reference_id, last_modified )
 					VALUES( " . $book['isbn_13'] . ", $reference_id, '" . date( 'c' ) . "' )";
 			$Response = $this->Mysqli->query( $sql );
 			if( ! $Response )

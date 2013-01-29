@@ -7,7 +7,6 @@ to do
 - check for a book in our database before wqe query the google book api
 	- consider requesting a higher rate limit on google books api
 
-
 resources
 ---------
 
