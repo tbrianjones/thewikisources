@@ -28,13 +28,12 @@
 			$this->db->limit( $limit );
 			$Query = $this->db->get();
 			if( $Query->num_rows > 0 ) {
-				$i = 0;
 				foreach( $Query->result() as $Row ) {
 					$this->load->model( 'Book_model', 'Book' );
 					$this->Book->load( $Row->book_isbn_13 );
-					$this->books[$i] = get_object_vars( $this->Book );
-					$this->books[$i]['count'] = $Row->count;
-					$i++;
+					$book = get_object_vars( $this->Book );
+					$book['count'] = $Row->count;
+					$this->books[] = $book;
 				}
 			} else {
 				return FALSE;

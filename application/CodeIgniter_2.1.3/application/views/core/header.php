@@ -9,5 +9,7 @@
 <body>
 
 	<div id="header">
-		<p>header</p>
+		<p id="nav">
+			<a href="/">WikiCortex</a><a href="/">Search Wikipedia's Most Cited Books</a>
+		</p>
 	</div>
