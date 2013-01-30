@@ -11,7 +11,7 @@
 	
 	
 	// include configuration ( you must update config.example with passwords when checking this repo out the first time )
-	require( 'config.php');
+	require( '/var/www/config.php');
 	
 	
 	class Wiki_article_model

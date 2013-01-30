@@ -3,8 +3,10 @@
 	
 	<?php // var_dump( $reference ); ?>
 	
-	<h3>From <a href=""><?php echo $reference['article']['title']; ?></a></h3>
-	<?php echo $reference['context_html']; ?>
-	<p>Retrieved: <?php echo $reference['last_modified']; ?></p>
+	<div id="reference_result_profile">
+		<h2>From Wikipedia Article: <a href="<?php echo $reference['article']['wikipedia_url']; ?>"><?php echo $reference['article']['title']; ?></a></h2>
+		<?php echo $reference['context_html']; ?>
+		<p>Retrieved: <?php echo $reference['last_modified']; ?></p>
+	</div>
 
 <?php } ?>

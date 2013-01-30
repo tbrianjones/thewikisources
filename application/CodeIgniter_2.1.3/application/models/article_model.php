@@ -17,6 +17,7 @@
 		
 		// derived attributes
 		public $profile_url;
+		public $wikipedia_url;
 		
 		
 		// load data for this reference
@@ -56,6 +57,7 @@
 				
 				// set derived data
 				$this->get_profile_url();
+				$this->get_wikipedia_url();
 				
 			} else {
 			
@@ -67,7 +69,10 @@
 	
 		private function get_profile_url() {
 			$this->profile_url = '/article/profile' . $this->id;
-			return $this->profile_url;
+		}
+		
+		private function get_wikipedia_url() {
+			$this->wikipedia_url = 'http://en.wikipedia.org/wiki/' . $this->title;
 		}
 
 		

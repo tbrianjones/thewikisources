@@ -13,7 +13,7 @@
 	ini_set('memory_limit','64M');
 	
 	// include configuration ( you must update config.example with passwords when checking this repo out the first time )
-	require( 'config.php');
+	require( '/var/www/config.php');
 	
 	// connect to mysql
 	$Mysqli = new mysqli( DB_HOST, DB_USER, DB_PASS, DB_NAME );
