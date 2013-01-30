@@ -13,7 +13,8 @@ sleep $sleep
 curl -XPUT "${es_host}/events/?pretty=true" -d '{
 	"index" : {
 		"number_of_shards" : 5,
-		"number_of_replicas" : 1
+		"number_of_replicas" : 1,
+		"refresh_interval" : "1s"
 	}
 }'
 

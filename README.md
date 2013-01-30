@@ -8,6 +8,7 @@ to do
 	- consider requesting a higher rate limit on google books api
 - check why this article crushes the system
 	- "Places_in_Afghanistan" - http://en.wikipedia.org/wiki/Places_in_Afghanistan
+- store the citeation number from the wiki article so we can relate references to the number in the reference context
 
 
 data estimates
@@ -81,9 +82,12 @@ elasticsearch performance tests
 -------------------------------
 
 ### indexing books
-*testing different refresh rates with es running on a small ec2 instance*
-| refresh rate | seconds run | books indexed |
-| ------------ | ----------- | ------------- |
-| 1s - default | 120         | 1275          |
-| -1 - off     | 120         | 1455          |
-| 10s          | 120
+*testing different refresh rates with es running on a small ec2 instance, the rds mysql database running on a micro instance, and the processor running on an ec2 small instance*
+*running the processors on a micro instance resulted in the instance being throttled ( the es and rds instances were not throttled )*
+
+| refresh rate | seconds run | books indexed |  
+| ------------ | ----------- | ------------- |  
+| 1s - default | 120         | 3388          |  
+| -1 - off     | 120         | 3388          |
+
+- conclusion ... my book processor is the bottleneck.  the es server and the rds database server were both using roughly 15% cpu.
