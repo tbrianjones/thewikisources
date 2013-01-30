@@ -729,17 +729,17 @@
 			// create article array		
 			$article = array(
 				'id'		=> $this->id,
-				'title'		=> $this->escape_json_string( $this->title ),
-				'brief'		=> $this->escape_json_string( $this->brief ),
+				'title'		=> $this->title,
+				'brief'		=> $this->brief,
 			);
 			
 			// modify event array
 			$event['id']		= $event_id;
-			$event['context']	= $this->escape_json_string( $event['context'] );
+			$event['context']	= $event['context'];
 			$event['article']	= $article;
 						
 			// push to elasticsearch
-			$event_json = json_encode( $event );
+			$event_json = json_encode( $event, JSON_HEX_APOS );
 			$cmd = "curl -s -S -XPUT '" . ES_HOST . "events/event/" . $event['id'] . "' -d '" . $event_json . "'";
 			$response = shell_exec( $cmd );
 			$Response = json_decode( $response );
@@ -772,17 +772,6 @@
 			$string = $this->Mysqli->real_escape_string( $string );
 			return $string;
 		}
-		
-		// espace a json_encoded string before sending it to elasticsearch
-		//
-		//	- adapted from rjha94's answer here: http://stackoverflow.com/questions/1048487/phps-json-encode-does-not-escape-all-json-control-characters
-		//
-		function escape_json_string( $string ) {
-			$search = array( "'" ) ;
-			$replace = array( "&#039" );
-			$string = str_replace( $search, $replace, $string );
-			return $string;
-		}
 				
 		
 	} // end class
@@ -795,6 +784,6 @@
 	}
 */
 
-	$Model = new Wiki_article_model( 'Baltimore' );
+	$Model = new Wiki_article_model( 'San_diego' );
 	
 ?>
