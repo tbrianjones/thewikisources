@@ -19,21 +19,21 @@
 		
 	
 		// class attributes
-		public $id;								// article id in wiki database
-		public $title;							// article title ( unique identifier on wikipedia )
-		public $url;							// article's url on wikipedia
-		public $html;							// raw html of the article
+		public $id;									// article id in wiki database
+		public $title;								// article title ( unique identifier on wikipedia )
+		public $url;								// article's url on wikipedia
+		public $html;								// raw html of the article
 		
 		// extracted article data
-		public $image_page_url;					// wiki url for the page of the main image ( not the direct image url )
-		public $image_url;						// wiki url for the main image
-		public $brief;							// first section of a wikipedia article
-		public $references = array();			// all references from the article
-		public $events = array();				// all sentences with years in them ( some junk remains, lots is filtered )
+		public $image_page_url;						// wiki url for the page of the main image ( not the direct image url )
+		public $image_url;							// wiki url for the main image
+		public $brief;								// first section of a wikipedia article
+		public $references = array();				// all references from the article
+		public $events = array();					// all sentences with years in them ( some junk remains, lots is filtered )
 		
 		// for fun extracted article data
-		public $love;							// is love discussed in the article
-		public $hate;							// is hate discussed in the article
+		public $love;								// is love discussed in the article
+		public $hate;								// is hate discussed in the article
 		
 		// mysql connection
 		private $mysqli;
@@ -786,12 +786,12 @@
 	} // end class
 
 
-	$i = 0;
+/*	$i = 0;
 	while( $i < 50000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}
-
-//	$Model = new Wiki_article_model( 'Florida' );
+*/
+	$Model = new Wiki_article_model( 'Kapton' );
 	
 ?>

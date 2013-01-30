@@ -33,13 +33,18 @@ mysql setup
 elasticsearch setup
 -------------------
 - boot up an instance running the 'wikicortex elasticsearch node'
-- run `sh SETUP/create_elasticsearch_mapping.sh` to configure our index
-- add data ... not working yet
-	- design
-	- delete all events when an article is reprocessed ( select their ids from mysql and do a group delete from es )
-	- add all events as the article is reprocessed
-	- done??
-	
+- create indexes
+	- run `sh SETUP/create_elasticsearch_events_mapping.sh` to configure our events index
+	- run `sh SETUP/create_elasticsearch_books_mapping.sh` to configure our books index
+- events data is automatically pushed to these indexes when we run wiki_article_model.php
+	- relevant data is also deleted every time we rerun an article
+- books data must be pushed all at once by running `application/data_processors/push_books_to_elasticsearch.php`
+	- shouldn't have to create a fresh index to do this, but may want to.  books will simply be versioned if they exist already
+	- this needs to be run whenever we want to update the books in the system
+	- we can kind of keep this efficient by only pushing books that have been modified since the last update
+		- this will miss references to old books that have been added though ... and some other stuff
+		- creating a new books index is the best option
+
 	
 setting up app after checking it out
 -------------
