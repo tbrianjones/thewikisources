@@ -1,5 +1,8 @@
 <?php
 
+// include our custom config to get defined data
+require( '/var/www/config.php' );
+
 /*
  *---------------------------------------------------------------
  * APPLICATION ENVIRONMENT

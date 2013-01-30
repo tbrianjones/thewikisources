@@ -17,7 +17,7 @@
 			
 			// render page
 			$page['content'] = $this->load->view( 'book/profile.php', $data, TRUE );
-			$page['content'] .= $this->load->view( 'references/profile_references.php', $data, TRUE );
+			$page['content'] .= $this->load->view( 'book/profile_references.php', $data, TRUE );
 			$this->load->view( 'core/page.php', $page );
 			
 		}
