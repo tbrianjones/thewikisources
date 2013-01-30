@@ -1,6 +1,9 @@
 <?php
 	
 	
+	ini_set( 'memory_limit', '256M' );
+	
+	
 	// NOTES
 	//
 	//	- system is designed to use a CRAWLER_FORCED_PROCESS_TIME.
@@ -112,7 +115,7 @@
 			
 			} catch( Exception $e ) {
 
-				echo "\n\n" . $e->getMessage() . "\n\n";
+				echo "\n\n ** " . $e->getMessage() . "\n\n";
 				
 			}
 			
@@ -179,9 +182,17 @@
 			
 			// check response
 			if( $data === FALSE )
-				throw new Exception( 'file_get_contents() error: failed to retrieve article from wikipedia.org.' );
-			else
-				$this->html = $data;
+				throw new Exception( 'curl error: failed to retrieve article from wikipedia.org.' );
+			
+			// check for 404
+			if( $headers['http_code'] == 404 )
+				throw new Exception( '404: article not found on wikipedia' );
+				
+			// check for other bad responses
+			if( $headers['http_code'] != 200 )
+				throw new Exception( 'Wikipedia http response was not 200' );
+
+			$this->html = $data;
 
 			// close curl connection
 			curl_close( $Curl );
