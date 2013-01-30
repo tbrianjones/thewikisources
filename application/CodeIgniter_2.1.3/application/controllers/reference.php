@@ -1,8 +1,6 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-
 	class Reference extends MY_Controller {	
-		
 		
 		public function book( $isbn_13 )
 		{
@@ -18,12 +16,11 @@
 			$data['references'] = get_object_vars( $this->References );
 			
 			// render page
-			$page['content'] = $this->load->view( 'books/profile.php', $data, TRUE );
-			$page['content'] .= $this->load->view( 'books/references.php', $data, TRUE );
+			$page['content'] = $this->load->view( 'book/profile.php', $data, TRUE );
+			$page['content'] .= $this->load->view( 'book/profile_references.php', $data, TRUE );
 			$this->load->view( 'core/page.php', $page );
 			
 		}
-	
 	
 	}
 	
