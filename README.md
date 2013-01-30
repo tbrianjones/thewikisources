@@ -15,6 +15,7 @@ data estimates
 - 8M wiki articles ( why are the number of article titles twice what wiki reports on wiki.org ??? )
 - 5 references per article ( 40M references )
 - 3.5 events per article ( 28M events )
+	- es index size will be ~50GB
 - 0.2 books per article ( 1.6M books )
 
 

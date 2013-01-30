@@ -785,14 +785,14 @@
 		
 	} // end class
 
-/*	
+
 	$i = 0;
 	while( $i < 50000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}
-*/
 
-	$Model = new Wiki_article_model( 'San_diego' );
+
+//	$Model = new Wiki_article_model( 'George_washington' );
 	
 ?>
