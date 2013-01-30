@@ -1,6 +1,15 @@
 <?php
 	
 	
+	// NOTES
+	//
+	//	- system is designed to use a CRAWLER_FORCED_PROCESS_TIME.
+	//		- this means the process will sleep until this time has elapsed if the execution doesn't take that long
+	//		- this is so we can parallelize our processors and still control the average time between requests to wikipedia
+	//		- this is not perfect, and we could still hit wiki really fast, but on average it will be under control ...
+	//
+	
+	
 	// include configuration ( you must update config.example with passwords when checking this repo out the first time )
 	require( 'config.php');
 	
