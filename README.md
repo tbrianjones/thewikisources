@@ -16,6 +16,8 @@ data estimates
 - 5 references per article ( 40M references )
 - 3.5 events per article ( 28M events )
 	- es index size will be ~50GB
+	- consider not storing source, and turning off _all to reduce this
+		- guessing this will reduce the size to ~15GB-20GB
 - 0.2 books per article ( 1.6M books )
 
 

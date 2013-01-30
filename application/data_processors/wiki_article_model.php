@@ -91,7 +91,7 @@
 				// create article url
 				$this->url = 'http://en.wikipedia.org/wiki/' . $this->title;
 				
-				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ===================================\n";
+				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ( id: $this->id ) ===================================\n";
 				
 				// empty this article before we process it
 				$this->reset_article();
@@ -446,7 +446,7 @@
 			$i = 0;
 			foreach( $strings[0] as $string )
 			{
-			
+								
 				$string = trim( $string );
 				$strlen = strlen( $string );
 				
@@ -455,12 +455,12 @@
 					&& $strlen > 40
 					&& strpos( $string, "\n" ) === FALSE
 				) {
-					
 					// extract year
-					$regex = '/\b(1[0-9]{3}|200[0-9]|201[0-3])(\b|.)/';
+					$regex = '/(\s|\()(1[0-9]{3}|200[0-9]|201[0-3])(\s|.|\)|-)/';
 					preg_match( $regex, $string, $matches );
 					$year = trim( substr( $matches[0], 0, -1 ) );
-
+					$year = trim( $year, '()-.,' );
+					
 					// save event to array
 					if( $year != '' && $string != '' && $year != 1000 ) {
 						$events[$i]['year']		= $year;
@@ -699,7 +699,7 @@
 			
 			foreach( $this->events as $event )
 			{
-			
+								
 				// prep data for insertion
 				$context = $this->prep_string( $event['context'] );
 				
@@ -734,7 +734,7 @@
 		//
 		private function add_event_to_elasticsearch( $event_id, $event )
 		{
-			
+						
 			// create article array		
 			$article = array(
 				'id'		=> $this->id,
@@ -792,7 +792,6 @@
 		$i++;
 	}
 
-
-//	$Model = new Wiki_article_model( 'George_washington' );
+//	$Model = new Wiki_article_model( 'Florida' );
 	
 ?>
