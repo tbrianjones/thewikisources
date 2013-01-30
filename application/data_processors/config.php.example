@@ -1,7 +1,12 @@
 <?php
 
+	// notes:
+	//
+	//	- after checking out eh repo, copy this file to config.php and fill in your info
+	//
+
 	// crawling & scraping
-	define( 'CRRALWER_SLEEP_SECONDS', 2 ); // time to sleep between http requests to wikipedia while crawling
+	define( 'CRAWLER_FORCED_PROCESS_TIME', 10 ); // process is forced to take this long so we can run parallel crawlers and still control requests to wikipedia
 	define( 'CRAWLER_USER_AGENT', 'timeline_research_tool/V0.1 ( <your_email> )' );
 	define( 'CRAWLER_BRIEF_LENGTH', 1 ); // number of paragraphs to grab from the begining of the article to use as brief
 	

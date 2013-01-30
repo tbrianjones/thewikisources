@@ -16,8 +16,7 @@ linux setup
 		- start ( or restart ) httpd
 	- php-xml
 	- git
-
-
+	
 
 mysql setup
 -----------
@@ -40,3 +39,13 @@ elasticsearch setup
 	- delete all events when an article is reprocessed ( select their ids from mysql and do a group delete from es )
 	- add all events as the article is reprocessed
 	- done??
+	
+	
+setting up app after checking it out
+-------------
+
+### data processors
+- copy `application/data_processors/config.php.example` to `application/data_processors/config.php` and update your info
+
+### web app / codeigniter
+- check stuff in configs ... need to add more notes here!!!

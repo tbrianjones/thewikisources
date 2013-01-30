@@ -33,12 +33,17 @@
 		private $Dom;
 		private $Dom_body;
 		
+		// process time
+		private $process_start_time;
+		
 		
 		// construct
 		//
 		public function __construct(
 			$title = NULL	// the article title to fetch
 		) {
+			
+			$this->process_start_time = microtime( TRUE );
 			
 			// set default timezone
 			date_default_timezone_set('America/Los_Angeles');
@@ -79,12 +84,9 @@
 				
 				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ===================================\n";
 				
-				// sleep so we don't crush wikipedia
-				sleep( CRAWLER_SLEEP_SECONDS );
-				
 				// empty this article before we process it
 				$this->reset_article();
-				die;
+				
 				// extract data from html
 				$this->get_html();
 				$this->get_brief();
@@ -109,7 +111,22 @@
 		
 		
 		public function __destruct(){
+			
+			// check process time
+			$execution_time = microtime( TRUE ) - $this->process_start_time;
+			echo "\n\n -- execution time: $execution_time";
+			
+			// if less that CRAWLER_FORCED_PROCESS_TIME, sleep for remainder
+			if( $execution_time < CRAWLER_FORCED_PROCESS_TIME ) {
+				$time_to_sleep = ceil( CRAWLER_FORCED_PROCESS_TIME - $execution_time );
+				sleep( $time_to_sleep );
+			}
+			
+			$total_process_time = microtime( TRUE ) - $this->process_start_time;
+			echo "\n -- total process time ( with forced time ): $total_process_time";
+			
 			echo "\n\n";
+			
 		}
 	
 	
@@ -134,7 +151,7 @@
 		//
 		private function get_html() {
 			
-			echo "\n -- downloading article from wikipedia";
+			echo "\n\n -- downloading article from wikipedia";
 			
 			// download page
 			$Curl = curl_init();
@@ -431,7 +448,7 @@
 				) {
 					
 					// extract year
-					$regex = '/\s(1[0-9]{3}|200[0-9]|201[0-3])(\s|.)/';
+					$regex = '/\b(1[0-9]{3}|200[0-9]|201[0-3])(\b|.)/';
 					preg_match( $regex, $string, $matches );
 					$year = trim( substr( $matches[0], 0, -1 ) );
 
@@ -540,10 +557,14 @@
 				while( $Row = $Response->fetch_object() ) {
 					
 					// delete each event from the elasticsearch index
-					$cmd = "curl -silent -XDELETE '" . ES_HOST . "events/event/" . $Row->id . "'";
-					$Es_response = json_decode( shell_exec( $cmd ) );
+					$cmd = "curl -s -S -XDELETE '" . ES_HOST . "events/event/" . $Row->id . "'";
+					$es_response = shell_exec( $cmd );
+					$Es_response = json_decode( $es_response );
+					if( ! isset( $Es_response ) )
+						throw new Exception( "Elasticsearch Error: request to Elasticsearch was malformed.\nresponse: " . $es_response );	
 					if( isset( $Es_response->error ) )
 						throw new Exception( "Elasticsearch Error: failed to delete event from Elasticsearch index.\nresponse: " . $Es_response->status . "\nerror message: " . $Es_response->error );
+						
 				}
 			}
 			
@@ -560,6 +581,8 @@
 	
 		private function update_article()
 		{
+			
+			echo "\n\n -- updating article in database";
 			
 			// prep data for insertion
 			$brief			= $this->prep_string( $this->brief );
@@ -586,7 +609,9 @@
 		
 		private function insert_references()
 		{
-		
+			
+			echo "\n\n -- adding references ( and books ) to database";
+			
 			foreach( $this->references as $reference )
 			{
 			
@@ -621,7 +646,7 @@
 			$reference_id,		// reference id from references table
 			$book				// array with book data
 		) {
-		
+			
 			// prep data for insertion
 			$google_book_id	= $this->prep_string( $book['google_book_id'] );
 			$title			= $this->prep_string( $book['title'] );
@@ -661,6 +686,8 @@
 		private function insert_events()
 		{
 		
+			echo "\n\n -- adding events to mysql and elasticsearch";
+			
 			foreach( $this->events as $event )
 			{
 			
@@ -676,7 +703,11 @@
 				
 				// add to elasticsearch index
 				$event_id = $this->Mysqli->insert_id;
-				$this->add_event_to_elasticsearch( $event_id, $event );
+				try {
+					$this->add_event_to_elasticsearch( $event_id, $event );
+				} catch( Exception $e ) {
+					echo "\n" . $e->getMessage();
+				}
 				
 			}
 			
@@ -709,9 +740,11 @@
 						
 			// push to elasticsearch
 			$event_json = json_encode( $event );
-			$cmd = "curl -silent -XPUT '" . ES_HOST . "events/event/" . $event['id'] . "?pretty=true' -d '" . $event_json . "'";
-			echo "\n\n" . $cmd . "\n\n";
-			$Response = json_decode( shell_exec( $cmd ) );
+			$cmd = "curl -s -S -XPUT '" . ES_HOST . "events/event/" . $event['id'] . "' -d '" . $event_json . "'";
+			$response = shell_exec( $cmd );
+			$Response = json_decode( $response );
+			if( ! isset( $Response ) )
+				throw new Exception( "Elasticsearch Error: request to Elasticsearch was malformed.\nresponse: " . $response );			
 			if( isset( $Response->error ) )
 				throw new Exception( "Elasticsearch Error: failed to push event to Elasticsearch index.\nresponse: " . $Response->status . "\nerror message: " . $Response->error );
 				
@@ -753,7 +786,15 @@
 				
 		
 	} // end class
-	
+
+/*	
+	$i = 0;
+	while( $i < 50000 ) {
+		$Model = new Wiki_article_model();
+		$i++;
+	}
+*/
+
 	$Model = new Wiki_article_model( 'Baltimore' );
 	
 ?>
