@@ -67,7 +67,9 @@
 			$this->Mysqli->set_charset( 'utf8' );
 
 			try {
-			
+				
+				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: ";
+				
 				// get title if none was set
 				if( is_null( $title ) ) {
 					$id = rand( 1, 9577346 );
@@ -94,7 +96,7 @@
 				// create article url
 				$this->url = 'http://en.wikipedia.org/wiki/' . $this->title;
 				
-				echo "\n\n=== PROCESSING WIKIPEDIA ARTICLE: $this->title ( id: $this->id ) ===================================\n";
+				echo "$this->title ( id: $this->id ) ===================================\n";
 				
 				// empty this article before we process it
 				$this->reset_article();
@@ -115,7 +117,7 @@
 			
 			} catch( Exception $e ) {
 
-				echo "\n\n ** " . $e->getMessage() . "\n\n";
+				echo "\n\n ** " . $e->getMessage();
 				
 			}
 			
@@ -797,12 +799,12 @@
 	} // end class
 
 
-/*	$i = 0;
+	$i = 0;
 	while( $i < 50000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}
-*/
-	$Model = new Wiki_article_model( 'Kapton' );
+
+//	$Model = new Wiki_article_model( 'Kapton' );
 	
 ?>

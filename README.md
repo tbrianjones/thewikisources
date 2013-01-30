@@ -75,3 +75,15 @@ resources
 mysql data schema
 -----------------
 - see mysql_schema.sql
+
+
+elasticsearch performance tests
+-------------------------------
+
+### indexing books
+*testing different refresh rates with es running on a small ec2 instance*
+| refresh rate | seconds run | books indexed |
+| ------------ | ----------- | ------------- |
+| 1s - default | 120         | 1275          |
+| -1 - off     | 120         | 1455          |
+| 10s          | 120
