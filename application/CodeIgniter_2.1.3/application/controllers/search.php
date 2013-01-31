@@ -16,12 +16,13 @@
 			if( $this->form_validation->run() === FALSE ) {
 				
 				// just load the search form
+				$page['content'] = $this->load->view( 'search/search_books_form.php', NULL, TRUE );
 				
 			// form was successful
 			} else {
 			
-			// search es for books
-			// display results
+				// search es for books
+				// display results
 			
 			}
 			

@@ -1,19 +1,19 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
-	class Welcome extends MY_Controller {
-	
+	class Timelines extends MY_Controller {	
+		
 		
 		public function index()
 		{
 			
-			$page['content'] = $this->load->view( 'pages/welcome_index.php', NULL, TRUE );
+			$page['content'] = $this->load->view( 'pages/timelines_index.php', NULL, TRUE );
 
-			// render page
+			// render page			
 			$this->load->view( 'core/page.php', $page );
 			
 		}
-
+			
 	
-	} // end class
-
+	}
+	
 ?>

@@ -800,7 +800,7 @@
 
 
 	$i = 0;
-	while( $i < 50000 ) {
+	while( $i < 500000 ) {
 		$Model = new Wiki_article_model();
 		$i++;
 	}

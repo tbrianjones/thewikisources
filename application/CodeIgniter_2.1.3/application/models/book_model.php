@@ -69,7 +69,7 @@
 	
 	
 		private function get_profile_url() {
-			$this->profile_url = '/reference/book/' . $this->isbn_13;
+			$this->profile_url = '/books/profile/' . $this->isbn_13;
 			return $this->profile_url;
 		}
 		
